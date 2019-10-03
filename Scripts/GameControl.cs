@@ -42,6 +42,7 @@ public class GameControl : MonoBehaviour
 
     void Start()
     {
+       
         pause = FindObjectOfType<PauseButton>();
         parallaxBackGround = FindObjectOfType<ParallaxBackGround>();
         toggle = FindObjectOfType<Toggle>();
@@ -51,22 +52,28 @@ public class GameControl : MonoBehaviour
         pause.pauzePanel.SetActive(true);
         pauseButton.SetActive(false);
         Time.timeScale = 0;
-
        
-        //PlayGamesClientConfiguration config = new PlayGamesClientConfiguration.Builder().Build();
-        //PlayGamesPlatform.InitializeInstance(config);
-        //PlayGamesPlatform.Activate();  //выбор аккаунта в гугл плей
-        //Social.localUser.Authenticate((bool success) =>
-        //{
-        //    if (success)
-        //    {
-        //        print("Удачно вошёл");
-        //    }
-        //    else
-        //    {
-        //        print("НЕУдачно вошёл");
-        //    }
-        //});      
+    }
+
+    void Update()
+    {
+        if (MaxScore < score)
+        {
+            MaxScore = score;
+            PlayerPrefs.SetInt("MaxScore", MaxScore);
+            
+        }
+
+        if (MaxScore > score)
+        {
+            MaxScoreText.text = "Рекорд: " + MaxScore;
+        }
+    }
+
+    public void LeaderboardButton()
+    {
+        MenuGame.ShowLeaderboards();
+        //Social.ShowLeaderboardUI();
     }
 
     void Awake()
@@ -83,27 +90,21 @@ public class GameControl : MonoBehaviour
         {
             PlayerPrefs.SetInt("music", 1);
             toggle.isOn = false;
-           // myAudio[0].mute = true;
-           // myAudio[1].mute = true;
+           
             PlayerPrefs.Save();
-        }
-        
+        }       
         else
         {
             if (PlayerPrefs.GetInt("music") == 0)
             {
                 myAudio[0].mute = false;
-                myAudio[1].mute = false;
-                //myAudio[0].enabled = false;
-                //myAudio[1].enabled = false;
+                myAudio[1].mute = false;               
                 toggle.isOn = false;
             }
             else
             {
                 myAudio[0].mute = true;
-                myAudio[1].mute = true;
-                //myAudio[0].enabled = true;
-                //myAudio[1].enabled = true; 
+                myAudio[1].mute = true;               
                 toggle.isOn = true;
             }
         }
@@ -113,9 +114,7 @@ public class GameControl : MonoBehaviour
     {
         if (toggle.isOn)
         {
-            PlayerPrefs.SetInt("music", 1);
-            //myAudio[0].enabled = true;
-            //myAudio[1].enabled = true;
+            PlayerPrefs.SetInt("music", 1);            
             myAudio[0].mute = true;
             myAudio[1].mute = true;
         }
@@ -123,47 +122,9 @@ public class GameControl : MonoBehaviour
         {
             PlayerPrefs.SetInt("music", 0);
             myAudio[0].mute = false;
-            myAudio[1].mute = false;
-            //myAudio[0].enabled = false;
-            //myAudio[1].enabled = false;
+            myAudio[1].mute = false;          
         }
         PlayerPrefs.Save();
-    }
-
-    void Update()
-    {
-
-        if (MaxScore < score)
-        {
-            MaxScore = score;
-            PlayerPrefs.SetInt("MaxScore", MaxScore);
-
-            ReportScore(MaxScore);
-        }
-
-        if(MaxScore > score)
-        {
-            MaxScoreText.text = "Рекорд: " + MaxScore;
-        }
-    }
-
-    public void LeaderboardButton()
-    {
-        Social.ShowLeaderboardUI();
-    }
-
-    public void ReportScore(int score)
-    {
-
-        Social.ReportScore(score, /*GPGSIds.leaderboard_flight_masters*/ leaderboard, (bool success) =>
-        {
-
-            if (success)
-            {
-                print("Удачно добавляем в таблицу лидеров");
-            }
-
-        });
     }
 
     public void Score()
@@ -183,7 +144,7 @@ public class GameControl : MonoBehaviour
         pauseButton.SetActive(false);
     }
 
-    void GameOverTextActiv()
+   public void GameOverTextActiv()
     {
         //gameOverText.SetActive(true);
         gameOverPanel.SetActive(true);
@@ -191,13 +152,15 @@ public class GameControl : MonoBehaviour
 
     public void Restart()
     {
-        
+
+        MenuGame.ReportScore(PlayerPrefs.GetInt("MaxScore", MaxScore));
+        Debug.Log(PlayerPrefs.GetInt("MaxScore", MaxScore));
+
         //PlayerPrefs.SetInt("deadCounter", deadCounter);
         deadCounter++;
-        Debug.Log(deadCounter);
+        Debug.Log(deadCounter);    
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-       
-       
+              
     }
 
     public void ReadyPanel()
@@ -211,10 +174,19 @@ public class GameControl : MonoBehaviour
 
     public void Exit()
     {
+        MenuGame.ReportScore(PlayerPrefs.GetInt("MaxScore", MaxScore));
         SceneManager.LoadScene("MenuGame");
         //Application.Quit();
-        // Debug.Log("Выход из игры");
-       // PlayGamesPlatform.Instance.SignOut();
+        
+    }
+
+    public void ExitReadyPanel()
+    {
+        // MenuGame.ReportScore(PlayerPrefs.GetInt("MaxScore", MaxScore));
+         SceneManager.LoadScene("MenuGame");
+        //Application.Quit();
+        //readyPanel.SetActive(false);
+        //gameOverPanel.SetActive(true);
 
     }
 
@@ -232,12 +204,10 @@ public class GameControl : MonoBehaviour
     {
         SaveScript.SavePlayer(this);
         Debug.Log("Сохранили");
-
     }
 
     public void Load()
-    {
-        
+    {      
         // SceneManager.LoadScene("ChoiceLevels");
        // PlayerData data = SaveScript.LoadPlayer();
        // GameControl.deadCounter = data.deadCounter;
